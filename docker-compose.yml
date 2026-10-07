@@ -1,0 +1,25 @@
+# Infraestrutura local do SmartMarket AI.
+# Por enquanto só o Postgres; o Airflow entra aqui mais tarde.
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: smartmarket-postgres
+    # Usuário, senha e nome do banco vêm do arquivo .env (fora do Git).
+    env_file: .env
+    ports:
+      - "5432:5432"
+    volumes:
+      # Volume nomeado: os dados sobrevivem quando o container é recriado.
+      - postgres_data:/var/lib/postgresql/data
+      # Scripts SQL executados automaticamente na PRIMEIRA criação do banco.
+      - ./sql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
